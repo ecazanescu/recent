@@ -34,6 +34,44 @@ function recent_form_alter(&$form, $form_state, $form_id) {
 
     $form['#submit'][] = 'recent_node_type_form_submit';
   }
+
+   if ($form_id == "block_admin_configure") {
+
+    // Create a fieldset that will be included in the vertical tab.
+    $form['views_n'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Number of views'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+      // Send this tab to the top of the list.
+      '#weight' => -99,
+      '#group' => 'visibility__active_tab',
+    );
+
+    $form['views_n']['settings_views'] = array(
+      '#type' => 'select',
+      '#title' => t('Number of nodes'),
+      '#options' => array(
+        5 => t('5'),
+        10 => t('10'),
+        15 => t('15'),
+        20 => t('20'),
+        25 => t('25'),
+        30 => t('30')
+      ),
+    );
+
+    $form['#submit'][] = 'recent_block_form_submit';
+  }
+
+
+
+}
+
+function recent_block_form_submit($form, &$form_state) {
+  $number_of_views = $form_state['values']['views_n']['settings_views'];
+  variable_set('number_of_views', $number_of_views);
 }
 
 function recent_node_type_form_submit($form, &$form_state) {
@@ -90,22 +128,22 @@ function recent_block_view($delta = '') {
  */
 function recent_contents() {
   global $user;
-  
-  $result = db_query('
-    SELECT node_id, max(timestamp) as most_recent
-    FROM {node_views}
-    WHERE user_id = :uid
-    GROUP BY node_id
-    ORDER BY most_recent
-    DESC LIMIT 6',
-    array(':uid' => $user->uid));
- 
+
+$query = db_select('node_views', 'n');
+  $query->addExpression('MAX(n.timestamp)', 'max_time');
+  $query->fields('n', array('node_id'))
+    ->condition('n.user_id', $user->uid, '=')
+    ->groupBy('n.node_id')
+    ->orderBy('max_time', 'DESC')
+    ->range(0, variable_get('number_of_views', 6));
+  $result = $query->execute();
+
 
   $output = '';
   $i = -1;
   $links = array();
   global $base_url;
-  
+
   foreach ($result as $record) {
     $i++;
 	if ($i == 0) {
