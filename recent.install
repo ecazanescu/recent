@@ -1,0 +1,24 @@
+// create table vith visited nodes
+function recent_schema() {
+  $schema['node_views'] = array(
+    'description' => t('nodes beeing viewed'),
+    'fields' => array(
+      'user_id' => array(
+        'description' => t('user id'),
+        'type' => 'int',
+        'not null' => true,
+      ),
+      'node_id' => array(
+        'description' => t('node id'),
+        'type' => 'int',
+        'not null' => true,
+      ),
+      'timestamp' => array(
+        'description' => t('time stamp'),
+        'type' => 'int',
+        'not null' => true,
+      ),
+    ),
+  );
+  return $schema;
+}
