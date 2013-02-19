@@ -1,3 +1,4 @@
+<?php
 // create table vith visited nodes
 function recent_schema() {
   $schema['node_views'] = array(

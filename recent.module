@@ -90,6 +90,7 @@ function recent_block_view($delta = '') {
  */
 function recent_contents() {
   global $user;
+  
   $result = db_query('
     SELECT node_id, max(timestamp) as most_recent
     FROM {node_views}
@@ -98,11 +99,13 @@ function recent_contents() {
     ORDER BY most_recent
     DESC LIMIT 6',
     array(':uid' => $user->uid));
-
+ 
 
   $output = '';
   $i = -1;
   $links = array();
+  global $base_url;
+  
   foreach ($result as $record) {
     $i++;
 	if ($i == 0) {
@@ -110,7 +113,7 @@ function recent_contents() {
     }
     $node = node_load($record->node_id);
 
-	$links[$i-1] = array( 'title'=> $node->title,'href' => '/node/'.$node->nid);
+	$links[$i-1] = array( 'title'=> $node->title,'href' => $base_url.'/node/'.$node->nid);
 
   }
 
