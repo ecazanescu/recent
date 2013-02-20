@@ -35,7 +35,7 @@ function recent_form_alter(&$form, $form_state, $form_id) {
     $form['#submit'][] = 'recent_node_type_form_submit';
   }
 
-   if ($form_id == "block_admin_configure") {
+  if ($form_id == "block_admin_configure") {
 
     // Create a fieldset that will be included in the vertical tab.
     $form['views_n'] = array(
@@ -64,9 +64,6 @@ function recent_form_alter(&$form, $form_state, $form_id) {
 
     $form['#submit'][] = 'recent_block_form_submit';
   }
-
-
-
 }
 
 function recent_block_form_submit($form, &$form_state) {
@@ -76,10 +73,8 @@ function recent_block_form_submit($form, &$form_state) {
 
 function recent_node_type_form_submit($form, &$form_state) {
 
-    variable_set('recent_' . $form['#node_type']->type, $form_state['values']['recent']['enabled']);
-
+  variable_set('recent_' . $form['#node_type']->type, $form_state['values']['recent']['enabled']);
 }
-
 
 // write records to new table when a node is viewed
 
@@ -129,7 +124,7 @@ function recent_block_view($delta = '') {
 function recent_contents() {
   global $user;
 
-$query = db_select('node_views', 'n');
+  $query = db_select('node_views', 'n');
   $query->addExpression('MAX(n.timestamp)', 'max_time');
   $query->fields('n', array('node_id'))
     ->condition('n.user_id', $user->uid, '=')
@@ -139,52 +134,53 @@ $query = db_select('node_views', 'n');
   $result = $query->execute();
 
 
-<<<<<<< HEAD
-=======
+
   $output = '';
->>>>>>> a611e893d27e66c73dfb81046bbb3ad0ff343f2d
+
   $i = -1;
   $links = array();
   global $base_url;
 
   foreach ($result as $record) {
     $i++;
-	if ($i == 0) {
+    if ($i == 0) {
       continue;
     }
     $node = node_load($record->node_id);
 
-	$links[$i-1] = array( 'title'=> $node->title,'href' => $base_url.'/node/'.$node->nid);
-
+    $links[$i - 1] = array('title' => $node->title, 'href' => $base_url . '/node/' . $node->nid);
   }
 
-   $rendered_HTML = theme('links', array('links' => $links), array());
+  $rendered_HTML = theme('links', array('links' => $links), array());
 
   return $rendered_HTML;
 }
 
-
-
 /**
  * sending email to admin when a user creates/updates a node
  */
+function recent_node_update($node) {
 
-function recent_node_update($node)
-{
-
- $loaded_node = node_load($node->nid);
-
- recent_mail_send( $loaded_node, $node );
-
+  $loaded_node = node_load($node->nid);
+  $state = 1;
+  recent_mail_send($loaded_node, $node, $state);
 }
 
-function recent_mail_send( $old_node, $new_node ) {
+function recent_node_insert($node) {
+
+  $new_node = node_load($node->nid);
+  $old_node = 0;
+  $state = 0;
+  recent_mail_send($old_node, $new_node, $state);
+}
+
+function recent_mail_send($old_node, $new_node, $state) {
 
   $module = 'recent';
   $key = 'key';
 
   // Specify 'to' and 'from' addresses.
-  $to =  variable_get('site_mail', 'admin@example.com');
+  $to = variable_get('site_mail', 'admin@example.com');
   $params = array();
   $from = NULL;
   $send = FALSE;
@@ -192,23 +188,34 @@ function recent_mail_send( $old_node, $new_node ) {
 
   $message = drupal_mail($module, $key, $to, $language, $params, $from, $send);
 
-$message['subject'] = 'The node with the id '. $old_node->nid . ' has been modified.';
-$message['body'] = array();
+  if ($state == 1) {
+    $message['subject'] = 'The node with the id ' . $old_node->nid . ' has been modified.';
+    $message['body'] = array();
 
-$line1 = 'New body:  ' . $new_node->body['und']['0']['value'];
-$line2 = 'Old body:  ' . $old_node->body['und']['0']['value'];
+    $line1 = 'New body:  ' . $new_node->body['und']['0']['value'];
+    $line2 = 'Old body:  ' . $old_node->body['und']['0']['value'];
 
 
-$message['body'][] = $line1;
-$message['body'][] = $line2;
+    $message['body'][] = $line1;
+    $message['body'][] = $line2;
+  }
 
+  if ($state == 0) {
+
+    $message['subject'] = 'The node with the id ' . $new_node->nid . ' has been created.';
+    $message['body'] = array();
+    $line1 = 'Title:  ' . $new_node->title;
+    $line2 = 'Body:  ' . $new_node->body['und']['0']['value'];
+    $message['body'][] = $line1;
+    $message['body'][] = $line2;
+  }
 // Retrieve the responsible implementation for this message.
-$system = drupal_mail_system($module, $key);
+  $system = drupal_mail_system($module, $key);
 
 // Format the message body.
-$message = $system->format($message);
+  $message = $system->format($message);
 
 // Send e-mail.
-$message['result'] = $system->mail($message);
-dpm($message);
-  }
+  $message['result'] = $system->mail($message);
+  dpm($message);
+}
