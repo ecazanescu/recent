@@ -139,6 +139,10 @@ $query = db_select('node_views', 'n');
   $result = $query->execute();
 
 
+<<<<<<< HEAD
+=======
+  $output = '';
+>>>>>>> a611e893d27e66c73dfb81046bbb3ad0ff343f2d
   $i = -1;
   $links = array();
   global $base_url;
